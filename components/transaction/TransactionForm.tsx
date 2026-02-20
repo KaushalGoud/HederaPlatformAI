@@ -1,232 +1,100 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { CheckCircle2, AlertCircle, Info, Loader2 } from 'lucide-react'
-
-type StatusType = 'idle' | 'loading' | 'success' | 'error'
-
-interface TransactionFormState {
-  recipientId: string
-  amount: string
-  status: StatusType
-  message: string
-}
+import { useState } from "react";
 
 export default function TransactionForm() {
-  const [formData, setFormData] = useState<TransactionFormState>({
-    recipientId: '',
-    amount: '',
-    status: 'idle',
-    message: '',
-  })
+  const [recipientId, setRecipientId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
-
-  const validateForm = (): boolean => {
-    if (!formData.recipientId.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        status: 'error',
-        message: 'Please enter a recipient ID',
-      }))
-      return false
+  const sendTransaction = async () => {
+    if (!recipientId || !amount) {
+      setStatus("⚠️ Please fill all fields");
+      return;
     }
 
-    if (!formData.amount.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        status: 'error',
-        message: 'Please enter an amount',
-      }))
-      return false
-    }
-
-    const amountNum = parseFloat(formData.amount)
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setFormData(prev => ({
-        ...prev,
-        status: 'error',
-        message: 'Amount must be a positive number',
-      }))
-      return false
-    }
-
-    return true
-  }
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateForm()) {
-      return
-    }
-
-    setFormData(prev => ({
-      ...prev,
-      status: 'loading',
-      message: 'Processing transaction...',
-    }))
+    setLoading(true);
+    setStatus("⏳ Processing transaction...");
 
     try {
-      // Call backend API
-      const response = await fetch('/api/transfer-hbar', {
-        method: 'POST',
+      const res = await fetch("/api/transfer-hbar", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          recipientId: formData.recipientId,
-          amount: parseFloat(formData.amount),
+          recipientId,
+          amount: Number(amount),
         }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await res.json();
 
-      if (response.ok) {
-        setFormData({
-          recipientId: '',
-          amount: '',
-          status: 'success',
-          message: `Transaction successful! Transaction ID: ${data.transactionId || 'Pending'}`,
-        })
+      if (res.ok) {
+        setStatus(`✅ Success! TX: ${data.transactionId}`);
+        setRecipientId("");
+        setAmount("");
       } else {
-        setFormData(prev => ({
-          ...prev,
-          status: 'error',
-          message: data.message || 'Transaction failed. Please try again.',
-        }))
+        setStatus(`❌ Error: ${data.error}`);
       }
-    } catch (error) {
-      console.error('Transaction error:', error)
-      setFormData(prev => ({
-        ...prev,
-        status: 'error',
-        message: 'An error occurred. Please check your connection and try again.',
-      }))
+    } catch (err) {
+      setStatus("❌ Network error");
+    } finally {
+      setLoading(false);
     }
-  }
-
-  const resetStatus = () => {
-    setFormData(prev => ({
-      ...prev,
-      status: 'idle',
-      message: '',
-    }))
-  }
+  };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle className="text-2xl">Send HBAR</CardTitle>
-        <CardDescription>Transfer HBAR tokens on the Hedera network</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSend} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="recipientId" className="text-sm font-medium">
-              Recipient ID
-            </label>
-            <Input
-              id="recipientId"
-              name="recipientId" // Changed from 'recipient' to 'recipientId'
-              placeholder="Recipient ID, e.g., 0.0.12345"
-              value={formData.recipientId} // Changed from 'recipient' to 'recipientId'
-              onChange={handleInputChange}
-              disabled={formData.status === 'loading'}
-              className="font-mono text-sm"
-            />
-          </div>
+    <div className="bg-zinc-900/70 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 space-y-5 shadow-2xl">
 
-          <div className="space-y-2">
-            <label htmlFor="amount" className="text-sm font-medium">
-              Amount (HBAR)
-            </label>
-            <Input
-              id="amount"
-              name="amount"
-              type="number"
-              placeholder="Amount"
-              value={formData.amount}
-              onChange={handleInputChange}
-              disabled={formData.status === 'loading'}
-              step="0.01"
-              min="0"
-              className="font-mono text-sm"
-            />
-          </div>
+      <h2 className="text-2xl font-bold text-center text-white">
+        🚀 Send HBAR
+      </h2>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={formData.status === 'loading'}
-            size="lg"
-          >
-            {formData.status === 'loading' ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              'Send'
-            )}
-          </Button>
-        </form>
+      {/* Recipient */}
+      <div className="space-y-1">
+        <label className="text-sm text-zinc-400">Recipient Account ID</label>
+        <input
+          placeholder="0.0.xxxxx"
+          value={recipientId}
+          onChange={(e) => setRecipientId(e.target.value)}
+          className="w-full rounded-lg bg-zinc-800 border border-zinc-700 p-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+        />
+      </div>
 
-        {/* Status Messages */}
-        <div className="mt-6 space-y-3">
-          {formData.status === 'success' && (
-            <Alert className="border-green-200 bg-green-50">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-900">Success</AlertTitle>
-              <AlertDescription className="text-green-800">
-                {formData.message}
-              </AlertDescription>
-              <button
-                onClick={resetStatus}
-                className="mt-2 text-sm font-medium text-green-700 hover:text-green-900 underline"
-              >
-                Send another transaction
-              </button>
-            </Alert>
-          )}
+      {/* Amount */}
+      <div className="space-y-1">
+        <label className="text-sm text-zinc-400">Amount (HBAR)</label>
+        <input
+          placeholder="10"
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="w-full rounded-lg bg-zinc-800 border border-zinc-700 p-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+        />
+      </div>
 
-          {formData.status === 'error' && (
-            <Alert className="border-red-200 bg-red-50">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertTitle className="text-red-900">Error</AlertTitle>
-              <AlertDescription className="text-red-800">
-                {formData.message}
-              </AlertDescription>
-              <button
-                onClick={resetStatus}
-                className="mt-2 text-sm font-medium text-red-700 hover:text-red-900 underline"
-              >
-                Try again
-              </button>
-            </Alert>
-          )}
+      {/* Button */}
+      <button
+        onClick={sendTransaction}
+        disabled={loading}
+        className={`w-full py-3 rounded-xl font-semibold transition-all duration-300
+          ${
+            loading
+              ? "bg-zinc-700 text-zinc-400 cursor-not-allowed"
+              : "bg-cyan-500 hover:bg-cyan-400 text-black shadow-lg shadow-cyan-500/30 hover:shadow-cyan-400/50"
+          }`}
+      >
+        {loading ? "Processing..." : "Send Transaction"}
+      </button>
 
-          {formData.status === 'loading' && (
-            <Alert className="border-blue-200 bg-blue-50">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertTitle className="text-blue-900">Processing</AlertTitle>
-              <AlertDescription className="text-blue-800">
-                {formData.message}
-              </AlertDescription>
-            </Alert>
-          )}
+      {/* Status */}
+      {status && (
+        <div className="text-center text-sm text-zinc-300 bg-zinc-800/60 p-3 rounded-lg border border-zinc-700">
+          {status}
         </div>
-      </CardContent>
-    </Card>
-  )
+      )}
+    </div>
+  );
 }

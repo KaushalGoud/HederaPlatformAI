@@ -1,153 +1,87 @@
+import { NextResponse } from "next/server";
 
-import { NextRequest, NextResponse } from 'next/server';
-import {
-  AccountId,
-  Client,
-  PublicKey,
-  Transaction,
-  TransactionId,
-  TransferTransaction,
-} from "@hashgraph/sdk";
-import { KMSClient, GetPublicKeyCommand, SignCommand } from "@aws-sdk/client-kms";
-import { z } from "zod";
-import { sha384 } from "crypto-hash"; // Assuming this is available or needs to be installed
+const HF_API_URL = "https://router.huggingface.co/v1/chat/completions";
+const HF_MODEL =
+  process.env.HF_MODEL || "mistralai/Mistral-7B-Instruct-v0.2";
 
-// Define KmsSigner class within the route file for self-containment
-class KmsSigner {
-    private readonly kmsClient: KMSClient;
-    private readonly keyId: string;
-    private readonly accountId: AccountId;
-    private readonly publicKey: PublicKey; // Use PublicKey from @hashgraph/sdk
+const SYSTEM_PROMPT = `You are an AI assistant for a Hedera HBAR wallet.
+If the user wants to send HBAR, respond ONLY with JSON:
+{
+  "action": "transfer_hbar",
+  "recipientId": "0.0.xxxxx",
+  "amount": 1
+}`;
 
-    constructor(
-        kmsClient: KMSClient,
-        keyId: string,
-        accountId: AccountId,
-        publicKey: PublicKey
-    ) {
-        this.kmsClient = kmsClient;
-        this.keyId = keyId;
-        this.accountId = accountId;
-        this.publicKey = publicKey;
-    }
-
-    getAccountId(): AccountId {
-        return this.accountId;
-    }
-
-    getAccountKey(): PublicKey {
-        return this.publicKey;
-    }
-
-    async sign(message: Uint8Array): Promise<Uint8Array> {
-        const signCommand = new SignCommand({
-            KeyId: this.keyId,
-            Message: Buffer.from(message), // KMS expects Buffer or Uint8Array
-            SigningAlgorithm: "ECDSA_SECP256K1",
-            MessageType: "DIGEST",
-        });
-
-        const { Signature } = await this.kmsClient.send(signCommand);
-
-        if (!Signature) {
-            throw new Error("Failed to sign transaction with KMS");
-        }
-
-        return Signature as Uint8Array;
-    }
-}
-
-// Zod schema for input validation
-const sendHbarSchema = z.object({
-  recipient: z.string().regex(/^(0\.0\.)\d+$/), // Basic Hedera account ID format validation
-  amount: z.number().positive(),
-});
-
-// Initialize KMS client and Hedera client globally (or per request if preferred for specific reasons)
-const kmsClient = new KMSClient({
-    region: process.env.AWS_REGION!,
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    },
-});
-
-let hederaClient: Client;
-let operatorAccountId: AccountId;
-let operatorPublicKey: PublicKey;
-
-async function initializeHederaClient() {
-    if (hederaClient) return; // Already initialized
-
-    if (!process.env.HEDERA_ACCOUNT_ID || !process.env.AWS_KMS_KEY_ID) {
-        throw new Error("Missing HEDERA_ACCOUNT_ID or AWS_KMS_KEY_ID environment variables.");
-    }
-
-    operatorAccountId = AccountId.fromString(process.env.HEDERA_ACCOUNT_ID);
-
-    const getPublicKeyCommand = new GetPublicKeyCommand({
-        KeyId: process.env.AWS_KMS_KEY_ID,
-    });
-    const publicKeyResponse = await kmsClient.send(getPublicKeyCommand);
-
-    if (!publicKeyResponse.PublicKey) {
-        throw new Error("Failed to get public key from KMS.");
-    }
-
-    operatorPublicKey = PublicKey.fromBytes(publicKeyResponse.PublicKey as Uint8Array);
-
-    const kmsSigner = new KmsSigner(
-        kmsClient,
-        process.env.AWS_KMS_KEY_ID,
-        operatorAccountId,
-        operatorPublicKey
-    );
-
-    hederaClient = Client.forTestnet(); // Or forMainnet()
-    hederaClient.setOperatorWith(
-        operatorAccountId,
-        operatorPublicKey,
-        kmsSigner.sign.bind(kmsSigner)
-    );
-}
-
-// Ensure client is initialized before handling requests
-const initializationPromise = initializeHederaClient();
-
-export async function POST(request: NextRequest) {
-  await initializationPromise; // Wait for the client to be initialized
-
+export async function POST(request: Request) {
   try {
-    const { recipient, amount } = sendHbarSchema.parse(await request.json());
+    const { message } = await request.json();
 
-    const transaction = await new TransferTransaction()
-      .setTransactionId(TransactionId.generate(operatorAccountId))
-      .addHbarTransfer(operatorAccountId, -amount)
-      .addHbarTransfer(recipient, amount)
-      .freezeWith(hederaClient);
-
-    const response = await transaction.execute(hederaClient);
-    const receipt = await response.getReceipt(hederaClient);
-
-    return NextResponse.json({
-      success: true,
-      transactionId: transaction.transactionId?.toString(),
-      receiptStatus: receipt.status.toString(),
+    const hfResponse = await fetch(HF_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.HF_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: HF_MODEL,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: message },
+        ],
+      }),
     });
+
+    const hfData = await hfResponse.json();
+
+    let aiText =
+      hfData.choices?.[0]?.message?.content || "No response";
+
+    aiText = aiText.replace(/```json|```/g, "").trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(aiText);
+    } catch {
+      return NextResponse.json({ reply: aiText });
+    }
+
+    // 🔥 If AI requests transfer
+    if (parsed.action === "transfer_hbar") {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_BASE_URL ||
+        `${request.headers.get("x-forwarded-proto") || "http"}://${request.headers.get("host")}`;
+
+      const transferResponse = await fetch(
+        `${baseUrl}/api/transfer-hbar`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recipientId: parsed.recipientId,
+            amount: parsed.amount,
+          }),
+        }
+      );
+
+      const result = await transferResponse.json();
+
+      if (!transferResponse.ok) {
+        return NextResponse.json({
+          reply: `❌ Transfer failed: ${result.error}`,
+        });
+      }
+
+      return NextResponse.json({
+        reply: `✅ Sent successfully!\nTX ID: ${result.transactionId}`,
+      });
+    }
+
+    return NextResponse.json({ reply: aiText });
   } catch (error) {
-    console.error("Hedera HBAR transfer error:", error);
+    console.error(error);
     return NextResponse.json(
-      { success: false, error: (error as Error).message },
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }
-}
-
-// Optional: GET handler for API status/info
-export async function GET() {
-  return NextResponse.json({
-    message: "Hedera HBAR Transfer API",
-    status: "Ready",
-    operatorAccountId: operatorAccountId?.toString(),
-  });
 }
