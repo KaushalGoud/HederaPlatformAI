@@ -1,93 +1,261 @@
-import { NextResponse } from 'next/server'
+// app/api/chat/route.ts
+import { NextResponse } from "next/server";
+import OpenAI from "openai";
+import type {
+  ChatCompletionTool,
+  ChatCompletionMessageToolCall,
+  ChatCompletionMessageParam,
+  ChatCompletionToolMessageParam,
+} from "openai/resources/chat/completions";
+import { z } from "zod";
 
-const HF_API_URL = 'https://router.huggingface.co/v1/chat/completions'
-const HF_MODEL = process.env.HF_MODEL || 'mistralai/Mistral-7B-Instruct-v0.2'
+// ── Client ──
+const openai = new OpenAI({
+  baseURL: "http://127.0.0.1:1234/v1",
+  apiKey: "lm-studio",
+});
 
-const SYSTEM_PROMPT = `You are an AI assistant for a Hedera HBAR transaction application.
-If the user wants to send HBAR, respond ONLY with valid JSON:
-{
-  "action": "transfer_hbar",
-  "recipientId": "0.0.xxxxx",
-  "amount": 1
-}
-Do not include explanations, markdown, or extra text.`
-
-export async function POST(request: Request) {
-  try {
-    const { message } = await request.json()
-    if (!message)
-      return NextResponse.json({ error: 'Message required' }, { status: 400 })
-
-    const HF_API_KEY = process.env.HF_API_KEY
-    if (!HF_API_KEY)
-      return NextResponse.json(
-        { error: 'HF API key missing' },
-        { status: 500 }
-      )
-
-    // 🔹 Call Hugging Face
-    const hfResponse = await fetch(HF_API_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${HF_API_KEY}`,
-        'Content-Type': 'application/json',
+// ── Tools ──
+const tools = [
+  {
+    type: "function" as const,
+    function: {
+      name: "send_hbar",
+      description:
+        "Send HBAR to another Hedera account. Use only when user explicitly asks to send, transfer, pay or give HBAR.",
+      parameters: {
+        type: "object",
+        properties: {
+          amount: {
+            type: "number",
+            description: "Amount of HBAR (positive number, decimals allowed)",
+          },
+          recipientId: {
+            type: "string",
+            description: "Hedera account ID in format 0.0.xxxxx",
+          },
+        },
+        required: ["amount", "recipientId"],
+        additionalProperties: false,
       },
-      body: JSON.stringify({
-        model: HF_MODEL,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: message },
-        ],
-      }),
-    })
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "get_balance",
+      description: "Get the current HBAR balance of this wallet/account.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "get_recent_transactions",
+      description: "Show the most recent transaction history of this account.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "check_address_safety",
+      description:
+        "Check if a Hedera account ID looks safe or has known risk flags.",
+      parameters: {
+        type: "object",
+        properties: {
+          accountId: {
+            type: "string",
+            description: "Hedera account ID in format 0.0.xxxxx",
+          },
+        },
+        required: ["accountId"],
+        additionalProperties: false,
+      },
+    },
+  },
+] satisfies ChatCompletionTool[];
 
-    const hfData = await hfResponse.json()
-    let aiText =
-      hfData.choices?.[0]?.message?.content || 'No response from model.'
+// ── Helpers ──
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+const ACCOUNT_ID = process.env.HEDERA_ACCOUNT_ID || "0.0.7286740";
 
-    // 🔹 Remove markdown if model returns ```json
-    aiText = aiText.replace(/```json|```/g, '').trim()
+async function callInternalApi<T>(
+  endpoint: string,
+  body: Record<string, unknown> = {},
+): Promise<T> {
+  const res = await fetch(`${baseUrl}${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API failed: ${res.status}`);
+  return res.json() as Promise<T>;
+}
 
-    let parsed
-    try {
-      parsed = JSON.parse(aiText)
-    } catch {
-      return NextResponse.json({ reply: aiText })
+// ── Tool runner ──
+async function runTool(
+  toolCall: ChatCompletionMessageToolCall,
+): Promise<string> {
+  if (toolCall.type !== "function") {
+    return "Unsupported tool type";
+  }
+
+  const { name, arguments: argsStr } = toolCall.function;
+  let args: Record<string, unknown>;
+
+  try {
+    args = JSON.parse(argsStr || "{}");
+  } catch {
+    return "Error: Invalid arguments JSON";
+  }
+
+  try {
+    if (name === "send_hbar") {
+      const parsed = z
+        .object({
+          amount: z.number().positive(),
+          recipientId: z.string().regex(/^0\.0\.\d+$/),
+        })
+        .parse(args);
+      const data = await callInternalApi<{ transactionId?: string }>(
+        "/api/transfer-hbar",
+        parsed,
+      );
+      return `✅ Sent ${parsed.amount} HBAR to ${parsed.recipientId}. Tx ID: ${data.transactionId || "unknown"}`;
     }
 
-    // 🔥 If transfer requested → EXECUTE IT
-    if (parsed.action === 'transfer_hbar') {
-      const { recipientId, amount } = parsed
+    if (name === "get_balance") {
+      const data = await callInternalApi<{ balance?: string | number }>(
+        "/api/balance",
+        {
+          accountId: ACCOUNT_ID,
+        },
+      );
+      return `💰 Current balance: ${data.balance ?? "unknown"} ℏ`;
+    }
 
-      const baseUrl =
-        process.env.NEXT_PUBLIC_BASE_URL ||
-        `${request.headers.get('x-forwarded-proto') || 'http'}://${request.headers.get('host')}`
+    if (name === "get_recent_transactions") {
+      interface Tx {
+        transaction_id?: string;
+        type?: string;
+        amount?: string | number;
+        status?: string;
+      }
+      const data = await callInternalApi<{ transactions?: Tx[] }>(
+        "/api/transactions",
+        { accountId: ACCOUNT_ID },
+      );
+      if (!data.transactions?.length) return "No recent transactions found.";
+      return data.transactions
+        .slice(0, 8)
+        .map(
+          (tx) =>
+            `• ${tx.transaction_id || "?"} | ${tx.type || "?"} | ${tx.amount || "—"} ℏ | ${tx.status || "?"}`,
+        )
+        .join("\n");
+    }
 
-      const transferResponse = await fetch(`${baseUrl}/api/transfer-hbar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipientId, amount }),
-      })
-
-      const result = await transferResponse.json()
-
-      if (!transferResponse.ok) {
-        return NextResponse.json({
-          reply: `❌ Transfer failed: ${result.error}`,
+    if (name === "check_address_safety") {
+      const parsed = z
+        .object({
+          accountId: z.string().regex(/^0\.0\.\d+$/),
         })
+        .parse(args);
+      const data = await callInternalApi<{ safe?: boolean }>(
+        "/api/safety",
+        parsed,
+      );
+      return data.safe !== false
+        ? `✅ ${parsed.accountId} looks safe.`
+        : `⚠️ ${parsed.accountId} appears suspicious or risky.`;
+    }
+
+    return `Unknown tool: ${name}`;
+  } catch (err: any) {
+    return `Error: ${err.message || "Invalid input"}`;
+  }
+}
+
+// ── Prompt ──
+const SYSTEM_PROMPT = `You are a friendly Hedera HBAR wallet assistant. Use emojis when helpful. Be concise and clear.
+
+Available actions (use them ONLY when clearly needed):
+- send_hbar(amount: number, recipientId: string)  → user wants to send/transfer/pay HBAR
+- get_balance()                                   → user asks for balance
+- get_recent_transactions()                       → user wants transaction history
+- check_address_safety(accountId: string)         → user wants to verify if an account is safe/risky
+
+Rules:
+1. If amount or account ID is missing → ask the user, never guess
+2. When you need to use a tool: output ONLY valid JSON in this exact format and nothing else:
+   {"tool_calls": [{"id": "call_abc123", "type": "function", "function": {"name": "tool_name", "arguments": "{\"key\":\"value\"}"}}]}
+3. After you get tool results, give a natural final answer
+4. For questions about Hedera, HBAR, wallets, blockchain etc. → just explain normally, no tools
+5. Think step by step but do not show your thinking in the final output unless asked`;
+
+// ── Handler ──
+export async function POST(req: Request) {
+  try {
+    const { message } = await req.json();
+    if (!message?.trim())
+      return NextResponse.json({ reply: "Please send a message." });
+
+    let messages: ChatCompletionMessageParam[] = [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: message.trim() },
+    ];
+
+    let stepsLeft = 12;
+
+    while (stepsLeft-- > 0) {
+      const resp = await openai.chat.completions.create({
+        model: "microsoft/phi-4-mini-reasoning",
+        messages,
+        tools,
+        tool_choice: "auto",
+        temperature: 0.1,
+        max_tokens: 1024,
+      });
+
+      const msg = resp.choices[0].message;
+
+      if (!msg.tool_calls?.length) {
+        let text = msg.content?.trim() || "Sorry, I couldn't answer that.";
+        text = text
+          .replace(/balance/i, "💰 Balance")
+          .replace(/successfully sent/i, "✅ Sent")
+          .replace(/suspicious|risky/i, "⚠️ $&");
+        return NextResponse.json({ reply: text });
       }
 
-      return NextResponse.json({
-        reply: `✅ HBAR sent successfully!\nTransaction ID: ${result.transactionId}`,
-      })
+      messages.push(msg);
+
+      const toolResponses = await Promise.all(
+        msg.tool_calls.map(async (tc) => {
+          const result = await runTool(tc);
+          return {
+            role: "tool",
+            tool_call_id: tc.id,
+            content: result,
+          } satisfies ChatCompletionToolMessageParam;
+        }),
+      );
+
+      messages.push(...toolResponses);
     }
 
-    return NextResponse.json({ reply: aiText })
-  } catch (error) {
-    console.error(error)
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      reply: "Too many steps — please ask a simpler question.",
+    });
+  } catch (err: any) {
+    console.error(err);
+    let msg = "Something went wrong. Try again?";
+    if (err.message?.includes("connect"))
+      msg = "Cannot reach LM Studio — is the server running?";
+    if (err.message?.includes("model"))
+      msg = "Model name mismatch — check LM Studio UI.";
+    return NextResponse.json({ reply: msg });
   }
 }
