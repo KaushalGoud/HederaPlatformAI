@@ -1,215 +1,115 @@
-# Hedera HBAR Transaction App
+# HBAR AI Wallet 🤖💸
 
-A clean, responsive Next.js frontend application for sending HBAR tokens on the Hedera network. Built with React, TypeScript, and Tailwind CSS.
+**Manage and transfer HBAR on the Hedera network using the power of conversational AI.**
 
-## Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-✨ **Clean & Responsive UI**
-- Centered, mobile-friendly form layout
-- Real-time input validation
-- Loading states with spinner animations
-- Success/error message display
+---
 
-🔌 **Backend Ready**
-- Placeholder API route (`/api/send-hbar`) for easy integration
-- TypeScript types for request/response validation
-- Error handling and logging
+## 💡 Inspiration
 
-📦 **Well-Organized Structure**
-- Modular component architecture
-- Separated concerns (UI, API, hooks, utilities)
-- Ready for future expansion (chat interface, transaction history, wallet integration)
+Cryptocurrency transactions can be intimidating for new users. Complex wallet addresses, gas fees, and multiple steps create a steep learning curve. We wanted to simplify this process and make crypto as easy as sending a text message. Our inspiration was to build a wallet that leverages the power of Large Language Models (LLMs) to create a truly user-friendly experience for the Hedera ecosystem.
 
-## Getting Started
+## 🚀 What it does
+
+HBAR AI Wallet is a Next.js application that provides two ways to interact with the Hedera network:
+
+1.  **Manual Transfer:** A clean, modern, and intuitive form for traditional HBAR transfers. It includes real-time validation and clear feedback on transaction status.
+
+2.  **AI Agent:** A conversational interface where you can instruct the AI to perform transactions for you. Simply type commands in plain English, like:
+    *   *"Send 50 HBAR to 0.0.12345"*
+    *   *"Transfer 12.5 HBAR to my friend's account 0.0.98765"*
+
+The AI parses your request, asks for confirmation, and executes the transaction on the Hedera network, providing a seamless and natural user experience.
+
+## ✨ Key Features
+
+*   **Dual-Mode Interface:** Switch between a traditional form and an AI-powered chat.
+*   **Natural Language Processing:** Uses LangChain and OpenAI/Hugging Face to understand and execute transaction commands.
+*   **Secure Backend:** Leverages AWS KMS for secure management of private keys, ensuring they are never exposed on the client-side.
+*   **Real-time Feedback:** Get instant updates on your transaction's progress, from submission to confirmation.
+*   **Modern Tech Stack:** Built with Next.js, React, and Tailwind CSS for a fast, responsive, and beautiful user interface.
+*   **Error Handling:** Robust error handling to guide the user in case of failed transactions or invalid commands.
+
+## 🛠️ How We Built It (Tech Stack)
+
+We chose a modern, robust, and scalable tech stack to bring HBAR AI Wallet to life:
+
+*   **Frontend:** Next.js, React, TypeScript, Tailwind CSS, Shadcn/UI
+*   **Backend & API:** Next.js API Routes
+*   **Blockchain Integration:** Hedera SDK (`@hashgraph/sdk`)
+*   **Artificial Intelligence:** LangChain, OpenAI / Hugging Face Inference
+*   **Security:** AWS KMS for private key management
+*   **Form Handling:** React Hook Form & Zod for validation
+
+## 챌 Challenges We Ran Into
+
+*   **Natural Language to Transaction:** The biggest challenge was reliably parsing unstructured natural language into a structured transaction object (recipient ID and amount). We solved this by using LangChain's function-calling capabilities to extract the necessary parameters from the user's input.
+*   **Secure Key Management:** Handling private keys is a critical security concern. We architected the application to use AWS KMS, ensuring that the signing key never leaves the secure environment of our backend. The backend requests signatures from KMS, which adds a layer of security.
+*   **Asynchronous UX:** Blockchain transactions aren't instant. We built a real-time feedback system in the UI to keep the user informed about the transaction status (pending, success, or failure) without needing to refresh the page.
+
+## 🏆 Accomplishments We're Proud Of
+
+*   **A Truly Conversational Wallet:** We successfully created an AI agent that can handle real-world financial transactions on a public blockchain, which we believe is a significant step forward in user-friendly crypto applications.
+*   **Security-First Design:** Integrating AWS KMS demonstrates a commitment to security and best practices, which is paramount in the web3 space.
+*   **Polished User Experience:** We're proud of the clean, intuitive, and responsive UI that makes a complex process feel simple and elegant.
+
+## 🔮 What's Next for HBAR AI Wallet
+
+We're just getting started! Here are some features we're excited to build next:
+
+*   **Transaction History & Queries:** Allow users to ask questions like, *"What was my last transaction?"* or *"How much did I send to 0.0.12345 last week?"*
+*   **Support for Other Hedera Services:** Integrate support for the Hedera Token Service (HTS) and Hedera Consensus Service (HCS).
+*   **Wallet Integration:** Add support for connecting existing wallets like HashPack and Blade.
+*   **Scheduled & Recurring Transactions:** Enable commands like, *"Send 10 HBAR to my savings account every Friday."*
+
+## 🏁 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
-- pnpm (or npm/yarn)
 
-### Installation
+*   Node.js 18+
+*   pnpm (or npm/yarn)
+*   An AWS account with KMS set up
+*   An OpenAI or Hugging Face API key
+*   A Hedera testnet account
 
-1. **Clone and install dependencies:**
-```bash
-pnpm install
-```
+### Installation & Setup
 
-2. **Run the development server:**
-```bash
-pnpm dev
-```
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd hedera-hbar-transaction-app
+    ```
 
-3. **Open in browser:**
-Navigate to `http://localhost:3000`
+2.  **Install dependencies:**
+    ```bash
+    pnpm install
+    ```
 
-## Usage
+3.  **Set up environment variables:**
+    Create a `.env.local` file in the root of the project and add the following variables:
 
-### Frontend Testing (Dummy Data)
+    ```env
+    # Hedera Credentials
+    HEDERA_ACCOUNT_ID=...
+    HEDERA_PRIVATE_KEY=... # Your account's private key (for local signing if not using KMS)
 
-The form is fully functional with built-in validation:
+    # AWS KMS Credentials (Recommended)
+    AWS_ACCESS_KEY_ID=...
+    AWS_SECRET_ACCESS_KEY=...
+    AWS_REGION=...
+    AWS_KMS_KEY_ID=... # The ID of the KMS key used for signing
 
-1. Enter a recipient ID (e.g., `0.0.12345`)
-2. Enter an amount (e.g., `100`)
-3. Click "Send"
-4. See success/error messages
+    # AI Service Credentials
+    OPENAI_API_KEY=... # Your OpenAI API key
+    ```
 
-The API route includes a 1-second delay simulation to test loading states.
+4.  **Run the development server:**
+    ```bash
+    pnpm dev
+    ```
 
-### Backend Integration
+5.  **Open your browser** and navigate to `http://localhost:3000`.
 
-To connect the Hedera SDK:
-
-1. **Install Hedera SDK:**
-```bash
-pnpm add @hashgraph/sdk
-```
-
-2. **Update `/app/api/send-hbar/route.ts`:**
-```typescript
-import { Client, TransferTransaction, AccountId, Hbar } from '@hashgraph/sdk'
-
-export async function POST(request: NextRequest) {
-  const body: SendHBARRequest = await request.json()
-  
-  // Initialize Hedera client
-  const client = Client.forTestnet() // or forMainnet()
-  client.setOperator(
-    AccountId.fromString(process.env.HEDERA_ACCOUNT_ID!),
-    process.env.HEDERA_PRIVATE_KEY!
-  )
-  
-  try {
-    // Create and submit transaction
-    const transaction = await new TransferTransaction()
-      .addHbarTransfer(process.env.HEDERA_ACCOUNT_ID!, Hbar.from(-body.amount))
-      .addHbarTransfer(body.recipientId, Hbar.from(body.amount))
-      .execute(client)
-    
-    const receipt = await transaction.getReceipt(client)
-    
-    return NextResponse.json({
-      success: true,
-      transactionId: transaction.transactionId.toString(),
-      message: `Transaction successful`,
-    })
-  } catch (error) {
-    return NextResponse.json({
-      success: false,
-      message: 'Transaction failed',
-    }, { status: 500 })
-  }
-}
-```
-
-3. **Add environment variables** in `.env.local`:
-```
-HEDERA_ACCOUNT_ID=0.0.xxxxx
-HEDERA_PRIVATE_KEY=your_private_key
-HEDERA_NETWORK=testnet
-```
-
-## Project Structure
-
-```
-hedera-hbar-app/
-├── app/
-│   ├── api/
-│   │   └── send-hbar/
-│   │       └── route.ts          # API endpoint for HBAR transfers
-│   ├── layout.tsx                 # Root layout
-│   ├── page.tsx                   # Home page
-│   └── globals.css                # Global styles
-├── components/
-│   ├── ui/                        # shadcn/ui components
-│   └── transaction/
-│       └── TransactionForm.tsx    # Main form component
-├── hooks/                          # Custom React hooks
-├── lib/                            # Utilities
-├── public/                         # Static assets
-└── README.md
-```
-
-See [FOLDER_STRUCTURE.md](./FOLDER_STRUCTURE.md) for detailed organization and expansion paths.
-
-## API Documentation
-
-### POST `/api/send-hbar`
-
-Sends HBAR tokens to a recipient.
-
-**Request:**
-```json
-{
-  "recipientId": "0.0.12345",
-  "amount": 100
-}
-```
-
-**Response (Success):**
-```json
-{
-  "success": true,
-  "transactionId": "0x...",
-  "message": "Successfully sent 100 HBAR to 0.0.12345"
-}
-```
-
-**Response (Error):**
-```json
-{
-  "success": false,
-  "message": "Error description"
-}
-```
-
-## Validation
-
-The form validates:
-- ✅ Recipient ID is not empty
-- ✅ Amount is provided and is a positive number
-- ✅ API responses and error handling
-
-## Styling
-
-- **Framework:** Tailwind CSS
-- **Components:** shadcn/ui
-- **Responsive:** Mobile-first design
-- **Colors:** Clean, minimal palette (background, primary, secondary, accent, destructive)
-
-## Future Enhancements
-
-- [ ] Chat interface for AI agent
-- [ ] Transaction history and lookup
-- [ ] Wallet integration (HashPack, Blade)
-- [ ] Multi-account support
-- [ ] Transaction status tracking
-- [ ] Real-time gas fee estimation
-
-## Development
-
-### File Structure for New Features
-
-When adding new features, follow the established patterns:
-
-1. **Create UI component** in `/components/<feature>/`
-2. **Create API route** in `/app/api/<feature>/` if needed
-3. **Add hooks** in `/hooks/use-<feature>.ts` if needed
-4. **Add page** in `/app/<feature>/page.tsx` if it's a separate route
-
-### Code Style
-
-- Use TypeScript for type safety
-- Follow React best practices (hooks, functional components)
-- Use Tailwind CSS utility classes
-- Add proper error handling and validation
-
-## Support
-
-For issues with:
-- **Hedera SDK:** Check [Hedera documentation](https://docs.hedera.com)
-- **Next.js:** See [Next.js docs](https://nextjs.org/docs)
-- **Tailwind:** Visit [Tailwind CSS docs](https://tailwindcss.com/docs)
-
-## License
-
-MIT
-0.0.7932544
+---
+Made with ❤️ for the Hackathon.
