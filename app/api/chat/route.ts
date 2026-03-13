@@ -211,7 +211,7 @@ export async function POST(req: Request) {
 
     while (stepsLeft-- > 0) {
       const resp = await openai.chat.completions.create({
-        model: "microsoft/phi-4-mini-reasoning",
+        model: "google/gemma-3-4b",
         messages,
         tools,
         tool_choice: "auto",

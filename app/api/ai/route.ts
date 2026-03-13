@@ -200,7 +200,7 @@ export async function POST(request: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "microsoft/phi-4-mini-reasoning",
+          model: "google/gemma-3-4b",
           messages,
           tools,
           tool_choice: "auto",
