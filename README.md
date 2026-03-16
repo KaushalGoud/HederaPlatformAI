@@ -1,113 +1,247 @@
-# HBAR AI Wallet 🤖💸
+# HASHFLOW 🌊💸
 
-**Manage and transfer HBAR on the Hedera network using the power of conversational AI.**
+**A secure, conversational HBAR wallet for the Hedera network — powered by local AI and AWS KMS.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+> Focused on AWS KMS asymmetric key signing for maximum security.
 
 ---
 
 ## 💡 Inspiration
 
-Cryptocurrency transactions can be intimidating for new users. Complex wallet addresses, gas fees, and multiple steps create a steep learning curve. We wanted to simplify this process and make crypto as easy as sending a text message. Our inspiration was to build a wallet that leverages the power of Large Language Models (LLMs) to create a truly user-friendly experience for the Hedera ecosystem.
+Cryptocurrency transactions can be intimidating for new users. Complex wallet addresses, gas fees, and multiple confirmation steps create a steep learning curve. We wanted to simplify this by building a wallet that combines enterprise-grade key management with conversational AI — making crypto as easy as sending a text message, without ever compromising on security.
 
-## 🚀 What it does
+---
 
-HBAR AI Wallet is a Next.js application that provides two ways to interact with the Hedera network:
+## 🚀 What It Does
 
-1.  **Manual Transfer:** A clean, modern, and intuitive form for traditional HBAR transfers. It includes real-time validation and clear feedback on transaction status.
+HASHFLOW is a Next.js application that provides two ways to interact with the Hedera Testnet:
 
-2.  **AI Agent:** A conversational interface where you can instruct the AI to perform transactions for you. Simply type commands in plain English, like:
-    *   *"Send 50 HBAR to 0.0.12345"*
-    *   *"Transfer 12.5 HBAR to my friend's account 0.0.98765"*
+1. **Manual Transfer:** A clean, intuitive form for traditional HBAR transfers with real-time validation and transaction feedback.
 
-The AI parses your request, asks for confirmation, and executes the transaction on the Hedera network, providing a seamless and natural user experience.
+2. **AI Agent:** A conversational interface powered by a locally running LLM (via LM Studio) where you can instruct the AI in plain English:
+   - *"Send 50 HBAR to 0.0.12345"*
+   - *"What's my balance?"*
+   - *"Show my recent transactions"*
+   - *"Is account 0.0.98765 safe?"*
+
+   HASHFLOW parses your intent and executes the transaction securely on the Hedera network.
+
+---
+
+## 🔐 Secure Key Management Architecture (AWS KMS)
+
+HASHFLOW was built for the **Secure Key Management for Onchain Applications** bounty. Here's how we meet every requirement:
+
+### Key Generation & Storage
+- An **asymmetric ECC_SECG_P256K1 key** is generated and stored exclusively inside AWS KMS
+- The private key **never exists outside AWS** — not in memory, not in env vars, not anywhere
+- HASHFLOW never has access to the raw private key at any point — ever
+
+### Transaction Signing Without Key Exposure
+- When a transaction is ready to be signed, the backend calls the **AWS KMS Sign API** directly
+- KMS performs the ECDSA signing operation internally using the HSM-protected key
+- Only the **64-byte signature** is returned — the private key never leaves AWS hardware
+- Even if the application server is fully compromised, the private key cannot be extracted
+
+### How It Works
+```
+User Request
+     │
+     ▼
+Next.js API Route (/api/transfer-hbar)
+     │
+     ├── Validates recipient & amount
+     │
+     ├── getKmsPublicKey() → AWS KMS GetPublicKey API
+     │        └── Returns public key only — no private key involved
+     │
+     ├── setOperatorWith(accountId, publicKey, kmsSign)
+     │        └── Hedera SDK calls kmsSign() for every transaction
+     │
+     ├── kmsSign() → AWS KMS Sign API (ECDSA_SHA_256)
+     │        └── KMS signs internally → returns signature only
+     │        └── CloudTrail logs this Sign event automatically
+     │
+     ├── Hedera SDK submits signed transaction to Testnet
+     │
+     └── Returns TX ID + HashScan URL to client
+```
+
+### Access Controls
+- AWS IAM policies restrict which identities can call `kms:Sign` and `kms:GetPublicKey`
+- The KMS Key Policy enforces **least privilege** — only the HASHFLOW backend IAM user has signing permissions
+
+### Audit Logging
+- Every `Sign` operation is automatically logged to **AWS CloudTrail**
+- This provides a complete, tamper-proof audit trail of every transaction signing event including timestamps, caller identity, and key ID
+
+### Key Rotation
+- AWS KMS automatic key rotation is enabled — backing key material rotates annually with zero downtime
+
+---
 
 ## ✨ Key Features
 
-*   **Dual-Mode Interface:** Switch between a traditional form and an AI-powered chat.
-*   **Natural Language Processing:** Uses LangChain and OpenAI/Hugging Face to understand and execute transaction commands.
-*   **Secure Backend:** Leverages AWS KMS for secure management of private keys, ensuring they are never exposed on the client-side.
-*   **Real-time Feedback:** Get instant updates on your transaction's progress, from submission to confirmation.
-*   **Modern Tech Stack:** Built with Next.js, React, and Tailwind CSS for a fast, responsive, and beautiful user interface.
-*   **Error Handling:** Robust error handling to guide the user in case of failed transactions or invalid commands.
+- **Conversational AI Agent** — natural language transaction commands powered by a local LLM
+- **AWS KMS Asymmetric Signing** — private key lives in AWS HSM forever, never exposed anywhere
+- **Real-time Balance** — live HBAR balance fetched directly from Hedera Testnet
+- **Transaction History** — recent transactions with HashScan links, pulled from the Hedera Mirror Node
+- **Address Safety Check** — validates recipient accounts before sending
+- **HashScan Links** — every confirmed transaction links directly to the Hedera Testnet explorer
+- **CloudTrail Audit Trail** — every KMS Sign call logged automatically
 
-## 🛠️ How We Built It (Tech Stack)
+---
 
-We chose a modern, robust, and scalable tech stack to bring HBAR AI Wallet to life:
+## 🛠️ Tech Stack
 
-*   **Frontend:** Next.js, React, TypeScript, Tailwind CSS, Shadcn/UI
-*   **Backend & API:** Next.js API Routes
-*   **Blockchain Integration:** Hedera SDK (`@hashgraph/sdk`)
-*   **Artificial Intelligence:** LangChain, OpenAI / Hugging Face Inference
-*   **Security:** AWS KMS for private key management
-*   **Form Handling:** React Hook Form & Zod for validation
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 14, React, TypeScript, Tailwind CSS |
+| Blockchain | Hedera SDK (`@hashgraph/sdk`) |
+| AI (Local) | LM Studio — `google/gemma-3-4b` running locally |
+| Key Management | AWS KMS — `ECC_SECG_P256K1` asymmetric key, ECDSA signing |
+| Audit Trail | AWS CloudTrail |
+| Transaction Data | Hedera Mirror Node REST API |
+| Validation | Zod |
+| Crypto | `elliptic`, `asn1.js`, `keccak256` — ASN1 DER signature parsing |
+
+---
+
+## 🤖 How the AI Works (LM Studio)
+
+Instead of sending data to a third-party AI API, HASHFLOW runs the LLM **entirely on your local machine** using [LM Studio](https://lmstudio.ai):
+
+- LM Studio exposes a local OpenAI-compatible API at `http://127.0.0.1:1234/v1`
+- The model used is `google/gemma-3-4b`
+- The backend calls this local endpoint — **no data leaves your machine**
+- Intent detection parses commands like "send 10 HBAR to 0.0.12345" directly
+- For general questions, Gemma answers naturally without tool calls
+
+---
 
 ## 챌 Challenges We Ran Into
 
-*   **Natural Language to Transaction:** The biggest challenge was reliably parsing unstructured natural language into a structured transaction object (recipient ID and amount). We solved this by using LangChain's function-calling capabilities to extract the necessary parameters from the user's input.
-*   **Secure Key Management:** Handling private keys is a critical security concern. We architected the application to use AWS KMS, ensuring that the signing key never leaves the secure environment of our backend. The backend requests signatures from KMS, which adds a layer of security.
-*   **Asynchronous UX:** Blockchain transactions aren't instant. We built a real-time feedback system in the UI to keep the user informed about the transaction status (pending, success, or failure) without needing to refresh the page.
+- **ASN1 DER Signature Parsing:** AWS KMS returns ECDSA signatures in ASN1 DER format but Hedera expects raw 64-byte r+s format. We built a parser using `asn1.js` to decode and reformat the signature correctly.
+- **Clock Skew on Hedera:** Hedera nodes reject transactions with timestamps too far from network time. We solved this by setting the transaction valid start to 30 seconds in the past using `TransactionId.withValidStart()`.
+- **KMS Key Linking:** The Hedera account must be updated to recognize the KMS public key as its authorized signer. We built a one-time `AccountUpdateTransaction` script signed by both the old key and the new KMS key simultaneously.
+- **Lazy KMS Client Initialization:** The KMS client must be initialized after environment variables are loaded — not at module import time — to ensure credentials are available.
+- **Local LLM Reliability:** Gemma 3 4B has weak tool-calling reliability so we replaced tool calling with direct intent detection using regex and keyword matching for wallet commands.
+
+---
 
 ## 🏆 Accomplishments We're Proud Of
 
-*   **A Truly Conversational Wallet:** We successfully created an AI agent that can handle real-world financial transactions on a public blockchain, which we believe is a significant step forward in user-friendly crypto applications.
-*   **Security-First Design:** Integrating AWS KMS demonstrates a commitment to security and best practices, which is paramount in the web3 space.
-*   **Polished User Experience:** We're proud of the clean, intuitive, and responsive UI that makes a complex process feel simple and elegant.
+- **Zero Key Exposure:** The private key never exists outside AWS KMS hardware — not in env vars, not in memory, not anywhere
+- **Official Hedera KMS Pattern:** Implements the exact signing architecture from the official Hedera AWS KMS documentation
+- **Fully Local AI:** The entire AI pipeline runs on-device via LM Studio — no external API calls
+- **Complete Audit Trail:** Every KMS Sign operation is logged in CloudTrail automatically
+- **Production-Grade UX:** Address validation, error handling, HashScan links, and real-time balance
 
-## 🔮 What's Next for HBAR AI Wallet
+---
 
-We're just getting started! Here are some features we're excited to build next:
+## 🔮 What's Next
 
-*   **Transaction History & Queries:** Allow users to ask questions like, *"What was my last transaction?"* or *"How much did I send to 0.0.12345 last week?"*
-*   **Support for Other Hedera Services:** Integrate support for the Hedera Token Service (HTS) and Hedera Consensus Service (HCS).
-*   **Wallet Integration:** Add support for connecting existing wallets like HashPack and Blade.
-*   **Scheduled & Recurring Transactions:** Enable commands like, *"Send 10 HBAR to my savings account every Friday."*
+- **HTS Support:** Manage Hedera Token Service tokens through natural language
+- **HashPack / Blade Wallet Integration:** Connect existing wallets
+- **Scheduled Transactions:** *"Send 10 HBAR every Friday"*
+- **Multi-account Support:** Manage multiple Hedera accounts under one HASHFLOW interface
+- **On-chain AI Queries:** *"How much did I send last week?"* answered from real transaction history
+
+---
 
 ## 🏁 Getting Started
 
 ### Prerequisites
 
-*   Node.js 18+
-*   pnpm (or npm/yarn)
-*   An AWS account with KMS set up
-*   An OpenAI or Hugging Face API key
-*   A Hedera testnet account
+- Node.js 18+
+- npm
+- [LM Studio](https://lmstudio.ai) installed and running locally with `google/gemma-3-4b` loaded
+- AWS account with KMS configured
+- Hedera Testnet account from [portal.hedera.com](https://portal.hedera.com)
 
-### Installation & Setup
+### Installation
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd hedera-hbar-transaction-app
-    ```
+1. **Clone the repository:**
+```bash
+git clone <repository-url>
+cd hashflow
+```
 
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
+2. **Install dependencies:**
+```bash
+npm install
+```
 
-3.  **Set up environment variables:**
-    Create a `.env.local` file in the root of the project and add the following variables:
+3. **Set up environment variables:**
 
-    ```env
-    # Hedera Credentials
-    HEDERA_ACCOUNT_ID=...
-    HEDERA_PRIVATE_KEY=... # Your account's private key (for local signing if not using KMS)
+   Create a `.env.local` file:
+```env
+# Hedera
+HEDERA_ACCOUNT_ID=0.0.xxxxxxx
 
-    # AWS KMS Credentials (Recommended)
-    AWS_ACCESS_KEY_ID=...
-    AWS_SECRET_ACCESS_KEY=...
-    AWS_REGION=...
-    AWS_KMS_KEY_ID=... # The ID of the KMS key used for signing
+# AWS KMS — asymmetric ECC_SECG_P256K1 key
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=us-east-1
+AWS_KMS_KEY_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
 
-  
+> No `HEDERA_PRIVATE_KEY` needed — the private key lives in AWS KMS forever.
 
-4.  **Run the development server:**
-    ```bash
-    npm run dev
-    ```
+4. **Start LM Studio:**
+   - Open LM Studio
+   - Load the `google/gemma-3-4b` model
+   - Start the local server on port `1234` from the Developer tab
 
-5.  **Open your browser** and navigate to `http://localhost:3000`.
+5. **Run the development server:**
+```bash
+npm run dev
+```
+
+6. **Open** `http://localhost:3000`
+
+---
+
+## 🔑 AWS KMS Setup Guide
+
+1. **Create an asymmetric ECC key:**
+```bash
+aws kms create-key \
+  --key-spec ECC_SECG_P256K1 \
+  --key-usage SIGN_VERIFY \
+  --description "HASHFLOW Hedera signing key"
+```
+
+2. **Create an alias:**
+```bash
+aws kms create-alias \
+  --alias-name alias/hashflow-signing-key \
+  --target-key-id YOUR_KEY_ID
+```
+
+3. **Enable key rotation:**
+```bash
+aws kms enable-key-rotation --key-id YOUR_KEY_ID
+```
+
+4. **Attach IAM policy** restricting `kms:Sign` and `kms:GetPublicKey` to your backend only
+
+5. **Link the KMS key to your Hedera account** — run the one-time setup script:
+```bash
+npx tsx scripts/link-kms-key.ts
+```
+
+6. **Enable CloudTrail** in your AWS account to capture all KMS Sign events
+
+---
+
+## 🔒 Security Notes
+
+- Private key is **generated inside AWS KMS HSM and never exported** — not even to the application
+- No `HEDERA_PRIVATE_KEY` in environment variables — nothing to steal
+- All KMS `Sign` operations are logged automatically to CloudTrail
+- Zod validation on all API routes prevents malformed input
+- IAM least-privilege policy — only the backend user can call `kms:Sign`
 
 ---
 
