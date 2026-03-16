@@ -26,7 +26,7 @@ const EcdsaSigAsnParse = asn1.define("EcdsaSig", function (this: any) {
 
 let signCount = 0; // track how many times KMS signs per transaction
 
-export async function getKmsPublicKey(): Promise<PublicKey> {
+export async function decryptPrivateKey(): Promise<PublicKey> {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log(`🔑 [KMS] Key ID     : ${process.env.AWS_KMS_KEY_ID}`);
 
