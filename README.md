@@ -83,7 +83,7 @@ We're just getting started! Here are some features we're excited to build next:
 
 2.  **Install dependencies:**
     ```bash
-    pnpm install
+    npm install
     ```
 
 3.  **Set up environment variables:**
@@ -100,16 +100,14 @@ We're just getting started! Here are some features we're excited to build next:
     AWS_REGION=...
     AWS_KMS_KEY_ID=... # The ID of the KMS key used for signing
 
-    # AI Service Credentials
-    OPENAI_API_KEY=... # Your OpenAI API key
-    ```
+  
 
 4.  **Run the development server:**
     ```bash
-    pnpm dev
+    npm run dev
     ```
 
 5.  **Open your browser** and navigate to `http://localhost:3000`.
 
 ---
-Made with ❤️ for the Hackathon.
+
