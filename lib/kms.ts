@@ -24,7 +24,7 @@ const EcdsaSigAsnParse = asn1.define("EcdsaSig", function (this: any) {
   this.seq().obj(this.key("r").int(), this.key("s").int());
 });
 
-let signCount = 0; // track how many times KMS signs per transaction
+let signCount = 0;
 
 export async function decryptPrivateKey(): Promise<PublicKey> {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -49,7 +49,6 @@ export async function decryptPrivateKey(): Promise<PublicKey> {
   console.log(`🔗 [KMS] HashScan   : https://hashscan.io/testnet/account/${process.env.HEDERA_ACCOUNT_ID}`);
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-  // Reset sign counter for new transaction
   signCount = 0;
 
   return PublicKey.fromBytesECDSA(Buffer.from(compressedHex, "hex"));
@@ -70,7 +69,6 @@ export async function kmsSign(bytesToSign: Uint8Array): Promise<Uint8Array> {
 
   const response = await getKmsClient().send(command);
 
-  // Only log on first sign — rest are duplicate node signatures
   if (signCount === 1) {
     console.log(`🔐 [KMS] Signing via AWS KMS (ECDSA_SHA_256)...`);
     console.log(`🔐 [KMS] Sign #${signCount} — CloudTrail logged ✅`);
@@ -92,3 +90,6 @@ export async function kmsSign(bytesToSign: Uint8Array): Promise<Uint8Array> {
 
   return result;
 }
+
+// Alias so both route files can import their expected name
+export const getKmsPublicKey = decryptPrivateKey;
