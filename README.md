@@ -3,6 +3,7 @@
 **A secure, conversational HBAR wallet for the Hedera network — powered by local AI and AWS KMS.**
 
 > Focused on AWS KMS asymmetric key signing for maximum security.
+> AI agent won't work its only show cased locally using LM Studio AI model
 
 ---
 
