@@ -165,7 +165,7 @@ Instead of sending data to a third-party AI API, HASHFLOW runs the LLM **entirel
 1. **Clone the repository:**
 ```bash
 git clone <repository-url>
-cd hashflow
+cd HederaPlatformAI
 ```
 
 2. **Install dependencies:**
