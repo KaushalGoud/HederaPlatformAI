@@ -1,16 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:3001/api/:path*',
-      },
-    ]
-  },
-}
+  serverExternalPackages: [
+    "hedera-agent-kit",
+    "@hashgraph/sdk",
+    "@aws-sdk/client-kms",
+    "asn1.js",
+    "elliptic",
+    "keccak256",
+  ],
+};
 
-export default nextConfig
+export default nextConfig;
