@@ -106,10 +106,10 @@ export default function ChatInterface() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Clash+Grotesk:wght@500;600;700&family=Satoshi:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
         .hf-root {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Satoshi', system-ui, sans-serif;
           background: #080b12;
           border: 1px solid rgba(99,210,255,0.08);
           border-radius: 20px;
@@ -191,8 +191,21 @@ export default function ChatInterface() {
           50% { opacity: 1; transform: scale(1.03); }
         }
 
-        .hf-title { font-size: 15px; font-weight: 700; color: #f0f4ff; letter-spacing: -0.01em; }
-        .hf-subtitle { font-size: 11px; color: rgba(255,255,255,0.28); margin-top: 2px; font-weight: 400; letter-spacing: 0.02em; }
+        .hf-title { 
+          font-family: 'Clash Grotesk', sans-serif;
+          font-size: 15px; 
+          font-weight: 700; 
+          color: #f0f4ff; 
+          letter-spacing: -0.03em; 
+        }
+
+        .hf-subtitle { 
+          font-size: 11px; 
+          color: rgba(255,255,255,0.28); 
+          margin-top: 2px; 
+          font-weight: 500; 
+          letter-spacing: 0.02em; 
+        }
 
         .hf-status {
           margin-left: auto;
@@ -391,7 +404,7 @@ export default function ChatInterface() {
 
         .hf-input {
           flex: 1; background: transparent; border: none; outline: none;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Satoshi', sans-serif;
           font-size: 13.5px;
           color: rgba(240,244,255,0.88);
           padding: 9px 0;

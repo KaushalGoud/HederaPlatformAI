@@ -10,17 +10,21 @@ export default function TransactionForm() {
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState<StatusType>("idle");
   const [loading, setLoading] = useState(false);
+  const [txId, setTxId] = useState("");
+  const [hashscanUrl, setHashscanUrl] = useState("");
 
   const sendTransaction = async () => {
     if (!recipientId || !amount) {
-      setStatus("⚠️ Please fill all fields");
+      setStatus("Please fill all fields");
       setStatusType("error");
       return;
     }
 
     setLoading(true);
     setStatusType("loading");
-    setStatus("⏳ Processing transaction...");
+    setStatus("Signing with AWS KMS...");
+    setTxId("");
+    setHashscanUrl("");
 
     try {
       const res = await fetch("/api/transfer-hbar", {
@@ -32,16 +36,18 @@ export default function TransactionForm() {
       const data = await res.json();
 
       if (res.ok) {
-        setStatus(`✅ Success! TX: ${data.transactionId}`);
+        setStatus("Transaction confirmed");
         setStatusType("success");
+        setTxId(data.transactionId || "");
+        setHashscanUrl(data.hashscanUrl || "");
         setRecipientId("");
         setAmount("");
       } else {
-        setStatus(`❌ Error: ${data.error}`);
+        setStatus(data.error || "Transfer failed");
         setStatusType("error");
       }
-    } catch (err) {
-      setStatus("❌ Network error");
+    } catch {
+      setStatus("Network error — check connection");
       setStatusType("error");
     } finally {
       setLoading(false);
@@ -49,142 +55,441 @@ export default function TransactionForm() {
   };
 
   return (
-    <div className="w-full max-w-[480px] bg-[#0a0a0f] rounded-3xl overflow-hidden shadow-2xl shadow-black/60 border border-white/[0.06]">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-      {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-white/[0.06] bg-gradient-to-r from-violet-500/10 via-fuchsia-500/5 to-transparent">
-        <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-lg shadow-violet-500/40 flex-shrink-0">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-            <path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
-          </svg>
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-yellow-400 rounded-full border-2 border-[#0a0a0f] shadow-sm shadow-yellow-400/50" />
-        </div>
-        <div>
-          <h2 className="text-white font-semibold text-sm tracking-tight">Send HBAR</h2>
-          <p className="text-white/40 text-xs mt-0.5">Hedera Network · Instant transfer</p>
-        </div>
-        <div className="ml-auto flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-3 py-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-          <span className="text-yellow-400 text-xs font-medium">Testnet</span>
-        </div>
-      </div>
+        .tf-root {
+          font-family: 'Syne', sans-serif;
+          background: #080b12;
+          border: 1px solid rgba(99,210,255,0.08);
+          border-radius: 20px;
+          overflow: hidden;
+          width: 100%;
+          max-width: 480px;
+          position: relative;
+          box-shadow:
+            0 0 0 1px rgba(99,210,255,0.04),
+            0 40px 80px -20px rgba(0,0,0,0.8),
+            inset 0 1px 0 rgba(255,255,255,0.04);
+        }
 
-      {/* Form */}
-      <div className="px-6 pt-6 space-y-4">
+        .tf-root::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: repeating-linear-gradient(
+            0deg, transparent, transparent 2px,
+            rgba(255,255,255,0.007) 2px, rgba(255,255,255,0.007) 4px
+          );
+          pointer-events: none;
+          z-index: 0;
+          border-radius: 20px;
+        }
 
-        {/* Recipient */}
-        <div className="space-y-2">
-          <label className="text-white/50 text-xs font-medium tracking-wide uppercase">
-            Recipient Account ID
-          </label>
-          <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 focus-within:border-violet-500/50 focus-within:bg-white/[0.06] transition-all duration-200">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/25 flex-shrink-0">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        .tf-root::after {
+          content: '';
+          position: absolute;
+          top: 0; left: 10%; right: 10%;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(99,210,255,0.5), rgba(168,85,247,0.4), transparent);
+          pointer-events: none;
+          z-index: 10;
+        }
+
+        .tf-header {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 18px 22px;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          background: linear-gradient(180deg, rgba(99,210,255,0.035) 0%, transparent 100%);
+        }
+
+        .tf-logo {
+          width: 44px; height: 44px;
+          border-radius: 14px;
+          background: linear-gradient(135deg, #0ea5e9, #6366f1, #a855f7);
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+          position: relative;
+          box-shadow: 0 0 20px rgba(99,210,255,0.2), 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .tf-logo::after {
+          content: '';
+          position: absolute; inset: 0;
+          border-radius: 14px;
+          background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+        }
+
+        .tf-logo-ring {
+          position: absolute;
+          inset: -4px;
+          border-radius: 18px;
+          border: 1px solid rgba(99,210,255,0.18);
+          animation: ring-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes ring-pulse {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.03); }
+        }
+
+        .tf-title { font-size: 15px; font-weight: 700; color: #f0f4ff; letter-spacing: -0.01em; }
+        .tf-subtitle { font-size: 11px; color: rgba(255,255,255,0.28); margin-top: 2px; font-weight: 400; letter-spacing: 0.02em; }
+
+        .tf-badge {
+          margin-left: auto;
+          display: flex; align-items: center; gap: 7px;
+          background: rgba(234,179,8,0.07);
+          border: 1px solid rgba(234,179,8,0.14);
+          border-radius: 100px;
+          padding: 5px 12px;
+        }
+
+        .tf-badge-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: #eab308;
+          box-shadow: 0 0 6px #eab308;
+          animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+        .tf-badge-text { font-size: 11px; color: #eab308; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+
+        .tf-body {
+          position: relative;
+          z-index: 1;
+          padding: 22px 22px 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .tf-field { display: flex; flex-direction: column; gap: 8px; }
+
+        .tf-label {
+          font-size: 10.5px;
+          font-weight: 600;
+          color: rgba(255,255,255,0.3);
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+        }
+
+        .tf-input-row {
+          display: flex; align-items: center; gap: 10px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 14px;
+          padding: 0 14px;
+          transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .tf-input-row:focus-within {
+          border-color: rgba(99,210,255,0.22);
+          background: rgba(255,255,255,0.06);
+          box-shadow: 0 0 0 3px rgba(99,210,255,0.04);
+        }
+
+        .tf-input-icon { color: rgba(255,255,255,0.2); flex-shrink: 0; }
+
+        .tf-input {
+          flex: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 13px;
+          color: rgba(240,244,255,0.88);
+          padding: 13px 0;
+        }
+
+        .tf-input::placeholder { color: rgba(255,255,255,0.18); }
+        .tf-input:disabled { opacity: 0.4; }
+
+        /* hide number spinners */
+        .tf-input[type=number] { appearance: textfield; }
+        .tf-input[type=number]::-webkit-outer-spin-button,
+        .tf-input[type=number]::-webkit-inner-spin-button { appearance: none; }
+
+        .tf-tag {
+          font-family: 'Syne', sans-serif;
+          font-size: 11px;
+          font-weight: 700;
+          color: rgba(99,210,255,0.7);
+          background: rgba(99,210,255,0.07);
+          border: 1px solid rgba(99,210,255,0.15);
+          border-radius: 8px;
+          padding: 4px 9px;
+          flex-shrink: 0;
+          letter-spacing: 0.05em;
+        }
+
+        .tf-clear {
+          background: none; border: none; cursor: pointer;
+          color: rgba(255,255,255,0.2);
+          padding: 4px;
+          display: flex; align-items: center;
+          transition: color 0.15s;
+          flex-shrink: 0;
+        }
+        .tf-clear:hover { color: rgba(255,255,255,0.5); }
+
+        .tf-divider {
+          display: flex; align-items: center; gap: 12px;
+          padding: 2px 0;
+        }
+        .tf-divider-line {
+          flex: 1; height: 1px;
+          background: rgba(255,255,255,0.05);
+        }
+        .tf-divider-icon {
+          width: 28px; height: 28px;
+          border-radius: 8px;
+          background: rgba(99,210,255,0.06);
+          border: 1px solid rgba(99,210,255,0.1);
+          display: flex; align-items: center; justify-content: center;
+          color: rgba(99,210,255,0.4);
+        }
+
+        .tf-btn {
+          width: 100%;
+          padding: 14px;
+          border-radius: 14px;
+          border: none;
+          font-family: 'Syne', sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          transition: all 0.18s;
+          letter-spacing: 0.02em;
+        }
+
+        .tf-btn:not(:disabled) {
+          background: linear-gradient(135deg, #0ea5e9, #6366f1, #a855f7);
+          color: white;
+          box-shadow: 0 4px 20px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .tf-btn:not(:disabled):hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 28px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .tf-btn:not(:disabled):active { transform: translateY(0) scale(0.99); }
+
+        .tf-btn:disabled {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: rgba(255,255,255,0.25);
+          cursor: not-allowed;
+        }
+
+        .tf-status {
+          display: flex; align-items: flex-start; gap: 10px;
+          padding: 12px 14px;
+          border-radius: 14px;
+          font-size: 13px;
+          line-height: 1.5;
+          animation: status-in 0.2s ease both;
+        }
+
+        @keyframes status-in {
+          from { opacity: 0; transform: translateY(4px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .tf-status.success {
+          background: rgba(16,185,129,0.07);
+          border: 1px solid rgba(16,185,129,0.15);
+          color: #34d399;
+        }
+        .tf-status.error {
+          background: rgba(239,68,68,0.07);
+          border: 1px solid rgba(239,68,68,0.15);
+          color: #f87171;
+        }
+        .tf-status.loading {
+          background: rgba(99,210,255,0.05);
+          border: 1px solid rgba(99,210,255,0.12);
+          color: rgba(99,210,255,0.7);
+        }
+
+        .tf-status-icon { flex-shrink: 0; margin-top: 1px; }
+
+        .tf-tx {
+          margin-top: 6px;
+          display: flex; flex-direction: column; gap: 4px;
+        }
+
+        .tf-tx-id {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10.5px;
+          color: rgba(255,255,255,0.3);
+          word-break: break-all;
+        }
+
+        .tf-hashscan {
+          font-family: 'Syne', sans-serif;
+          font-size: 11px;
+          font-weight: 600;
+          color: rgba(99,210,255,0.6);
+          text-decoration: none;
+          display: inline-flex; align-items: center; gap: 4px;
+          transition: color 0.15s;
+        }
+        .tf-hashscan:hover { color: rgba(99,210,255,1); }
+
+        .tf-footer {
+          text-align: center;
+          font-size: 10px;
+          color: rgba(255,255,255,0.1);
+          padding: 0 22px 16px;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+          position: relative; z-index: 1;
+        }
+        .tf-footer span { color: rgba(99,210,255,0.25); }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 0.8s linear infinite; }
+      `}</style>
+
+      <div className="tf-root">
+        {/* Header */}
+        <div className="tf-header">
+          <div className="tf-logo">
+            <div className="tf-logo-ring" />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3L4 7.5V16.5L12 21L20 16.5V7.5L12 3Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
+              <path d="M12 3V21M4 7.5L20 16.5M20 7.5L4 16.5" stroke="rgba(255,255,255,0.3)" strokeWidth="1" strokeLinejoin="round"/>
             </svg>
-            <input
-              placeholder="0.0.xxxxx"
-              value={recipientId}
-              onChange={(e) => setRecipientId(e.target.value)}
-              className="flex-1 bg-transparent text-white text-sm placeholder-white/20 outline-none"
-            />
-            {recipientId && (
-              <button onClick={() => setRecipientId("")} className="text-white/20 hover:text-white/50 transition-colors">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M18 6 6 18M6 6l12 12"/>
+          </div>
+          <div>
+            <div className="tf-title">Send HBAR 💸</div>
+            <div className="tf-subtitle">Manual transfer · AWS KMS signed</div>
+          </div>
+          <div className="tf-badge">
+            <span className="tf-badge-dot" />
+            <span className="tf-badge-text">Testnet</span>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="tf-body">
+
+          {/* Recipient */}
+          <div className="tf-field">
+            <label className="tf-label">Recipient Account ID</label>
+            <div className="tf-input-row">
+              <svg className="tf-input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input
+                className="tf-input"
+                placeholder="0.0.xxxxx"
+                value={recipientId}
+                onChange={(e) => setRecipientId(e.target.value)}
+                disabled={loading}
+              />
+              {recipientId && (
+                <button className="tf-clear" onClick={() => setRecipientId("")}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 6 6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="tf-divider">
+            <div className="tf-divider-line" />
+            <div className="tf-divider-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M12 5v14M5 12l7 7 7-7"/>
+              </svg>
+            </div>
+            <div className="tf-divider-line" />
+          </div>
+
+          {/* Amount */}
+          <div className="tf-field">
+            <label className="tf-label">Amount</label>
+            <div className="tf-input-row">
+              <svg className="tf-input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+              </svg>
+              <input
+                className="tf-input"
+                placeholder="0.00"
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={loading}
+              />
+              <span className="tf-tag">HBAR</span>
+            </div>
+          </div>
+
+          {/* Button */}
+          <button className="tf-btn" onClick={sendTransaction} disabled={loading}>
+            {loading ? (
+              <>
+                <svg className="spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
                 </svg>
-              </button>
+                Signing with KMS...
+              </>
+            ) : (
+              <>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/>
+                </svg>
+                Send Transaction
+              </>
             )}
-          </div>
+          </button>
+
+          {/* Status */}
+          {statusType !== "idle" && (
+            <div className={`tf-status ${statusType}`}>
+              <span className="tf-status-icon">
+                {statusType === "success" && (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+                )}
+                {statusType === "error" && (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+                )}
+                {statusType === "loading" && (
+                  <svg className="spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                )}
+              </span>
+              <div>
+                {status}
+                {statusType === "success" && txId && (
+                  <div className="tf-tx">
+                    <div className="tf-tx-id">TX: {txId}</div>
+                    {hashscanUrl && (
+                      <a className="tf-hashscan" href={hashscanUrl} target="_blank" rel="noreferrer">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        View on HashScan
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Amount */}
-        <div className="space-y-2">
-          <label className="text-white/50 text-xs font-medium tracking-wide uppercase">
-            Amount (HBAR)
-          </label>
-          <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 focus-within:border-violet-500/50 focus-within:bg-white/[0.06] transition-all duration-200">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/25 flex-shrink-0">
-              <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
-            </svg>
-            <input
-              placeholder="10"
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="flex-1 bg-transparent text-white text-sm placeholder-white/20 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-            <span className="text-violet-400 text-xs font-semibold bg-violet-500/10 border border-violet-500/20 rounded-lg px-2 py-1 flex-shrink-0">
-              HBAR
-            </span>
-          </div>
-        </div>
-
-        {/* Fee row */}
-       
+        <div className="tf-footer">secured by <span>AWS KMS · Hedera Hashgraph</span></div>
       </div>
-
-      {/* Button */}
-      <div className="px-6 pt-4 pb-2">
-        <button
-          onClick={sendTransaction}
-          disabled={loading}
-          className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
-            loading
-              ? "bg-white/5 border border-white/10 text-white/30 cursor-not-allowed"
-              : "bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 hover:scale-[1.01] active:scale-[0.99]"
-          }`}
-        >
-          {loading ? (
-            <>
-              <svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-              </svg>
-              Processing...
-            </>
-          ) : (
-            <>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/>
-              </svg>
-              Send Transaction
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Status */}
-      {status && (
-        <div className={`mx-6 mb-2 mt-3 flex items-start gap-3 p-3.5 rounded-2xl border text-sm transition-all duration-300 ${
-          statusType === "success"
-            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-            : statusType === "error"
-            ? "bg-red-500/10 border-red-500/20 text-red-400"
-            : "bg-violet-500/10 border-violet-500/20 text-violet-300"
-        }`}>
-          {statusType === "success" && (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0 mt-0.5">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
-          )}
-          {statusType === "error" && (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0 mt-0.5">
-              <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>
-            </svg>
-          )}
-          {statusType === "loading" && (
-            <svg className="animate-spin flex-shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-            </svg>
-          )}
-          <span>{status}</span>
-        </div>
-      )}
-
-      {!status && <div className="pb-4" />}
-
-      <p className="text-center text-white/20 text-[10px] pb-4 mt-2">
-        Hedera Testnet · Transactions are not real
-      </p>
-    </div>
+    </>
   );
 }
