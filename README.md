@@ -42,7 +42,7 @@ Hedera Agent Kit (LangChain toolkit)
      ├── transfer_hbar tool  → sends HBAR via KMS-signed tx
      │
      ▼
-Gemini 2.5 Flash (primary) / Llama 3.3 70B via Groq (fallback)
+Gemini 2.5 Flash 
      │
      ▼
 SSE stream → real-time UI update
@@ -102,8 +102,7 @@ CloudTrail logs every Sign event ✅
 - 📋 **Transaction History** — from Hedera Mirror Node with HashScan links
 - ✅ **Human-in-the-loop** — confirms before every HBAR transfer
 - 🪵 **CloudTrail Audit** — every KMS Sign call logged automatically
-- 🔄 **Dual LLM** — Gemini 2.5 Flash (primary) + Groq Llama 3.3 70B (fallback)
-
+- 🔄 **LLM** — Gemini 2.5 Flash 
 ---
 
 ## 🛠️ Tech Stack
@@ -113,8 +112,7 @@ CloudTrail logs every Sign event ✅
 | Frontend | Next.js, React, TypeScript, Tailwind CSS |
 | Blockchain | `@hashgraph/sdk`, Hedera Agent Kit |
 | AI Agent | `hedera-agent-kit` + LangChain |
-| LLM (Primary) | Google Gemini 2.5 Flash (`@langchain/google-genai`) |
-| LLM (Fallback) | Groq — Llama 3.3 70B (`@langchain/groq`) |
+| LLM | Google Gemini 2.5 Flash (`@langchain/google-genai`) |
 | Key Management | AWS KMS — `ECC_SECG_P256K1`, ECDSA signing |
 | Streaming | Server-Sent Events (SSE) |
 | Audit Trail | AWS CloudTrail |
@@ -129,7 +127,7 @@ CloudTrail logs every Sign event ✅
 - Node.js 18+
 - AWS account with KMS configured
 - Google AI Studio API key (for Gemini) — [aistudio.google.com](https://aistudio.google.com)
-- Groq API key (optional fallback) — [console.groq.com](https://console.groq.com)
+- Groq API key (optional fallback) — [console.groq.com](https://console.groq.com) (If not using gemini)
 - Hedera Testnet account — [portal.hedera.com](https://portal.hedera.com)
 
 ### Installation
@@ -156,7 +154,7 @@ AWS_KMS_KEY_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
 # AI
 GEMINI_API_KEY=...
-GROQ_API_KEY=...          # optional fallback
+
 
 # App URL (change for production)
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
