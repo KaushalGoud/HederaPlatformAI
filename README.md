@@ -3,7 +3,7 @@
 **A secure, conversational HBAR wallet for the Hedera network — powered by the Hedera Agent Kit, GitHub Models (GPT-4o-mini), and AWS KMS.**
 
 > Private key never leaves AWS hardware. Real-time streaming AI. Enterprise-grade signing.
-
+>Testnet account is already integrated so you just check the application by transfering funds to another testnet account
 ---
 
 ## 💡 Inspiration
