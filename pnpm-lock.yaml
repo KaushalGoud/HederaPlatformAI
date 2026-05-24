@@ -16,7 +16,7 @@ importers:
         version: 2.6.0(@modelcontextprotocol/sdk@1.27.1(@cfworker/json-schema@4.1.1)(zod@3.25.76))
       '@hashgraph/sdk':
         specifier: ^2.80.0
-        version: 2.81.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))
+        version: 2.80.0(bn.js@5.2.1)(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.68.0(react@19.2.3))
@@ -148,7 +148,7 @@ importers:
         version: 8.5.1(react@19.2.3)
       hedera-agent-kit:
         specifier: ^3.8.2
-        version: 3.8.2(@cfworker/json-schema@4.1.1)(@langchain/langgraph@1.3.2(@langchain/core@1.1.48(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod-to-json-schema@3.25.2(zod@3.25.76))(zod@3.25.76))(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(react-dom@19.2.3(react@19.2.3))(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)(ws@8.19.0)
+        version: 3.8.2(@cfworker/json-schema@4.1.1)(@langchain/langgraph@1.3.2(@langchain/core@1.1.48(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod-to-json-schema@3.25.2(zod@3.25.76))(zod@3.25.76))(@opentelemetry/api@1.9.0)(bn.js@5.2.1)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(react-dom@19.2.3(react@19.2.3))(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)(ws@8.19.0)
       input-otp:
         specifier: 1.4.1
         version: 1.4.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -661,15 +661,6 @@ packages:
       expo-crypto:
         optional: true
 
-  '@hashgraph/cryptography@1.17.0':
-    resolution: {integrity: sha512-AFJncwcZxpeNUoaAbNjkXxUESO+WB8Wdi3IODD1iE6e7kFjk/T1rmFDTtoJRcE50Y3/h24y7GfMOkxiDlhRpxg==}
-    engines: {node: '>=12.0.0'}
-    peerDependencies:
-      expo-crypto: '*'
-    peerDependenciesMeta:
-      expo-crypto:
-        optional: true
-
   '@hashgraph/proto@2.26.0-beta.3':
     resolution: {integrity: sha512-i89RMYEjpG5uVOa7VzDMVQq8gNs4feeXvEJFyZzwp6i1NSmMHn9DfmIWePylh67LOFBNnX5ZyXNcgUJaAC8Fmw==}
     engines: {node: '>=10.0.0'}
@@ -685,12 +676,6 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       bn.js: 5.2.1
-
-  '@hashgraph/sdk@2.81.0':
-    resolution: {integrity: sha512-AaNcQsdi1pLJcxkt9vQyah54+e9aZZla12LIOjMIYdf2v8UvIv37J7TMApfDapXAUwYI7lTV06tv3Z8V5abrCg==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      bn.js: 5.2.3
 
   '@hono/node-server@1.19.14':
     resolution: {integrity: sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw==}
@@ -1315,10 +1300,6 @@ packages:
 
   '@langchain/core@1.1.24':
     resolution: {integrity: sha512-u6l0dmMHN/2PCsY6stXoh9CH1OTlVR5Gjz0JjT1XRPuidAlu3kTq4ivW95xCog/PRhiAsCh6GCEC4/PqhNrcgQ==}
-    engines: {node: '>=20'}
-
-  '@langchain/core@1.1.32':
-    resolution: {integrity: sha512-ZZNiER5tceFXqZOghfrxNHzM60gcQL5XK/8Ow5+o4OuKHrP1p/RUQBDM9Y1nddi/VmKQj+ncaXXM5KovXTEGGQ==}
     engines: {node: '>=20'}
 
   '@langchain/core@1.1.48':
@@ -4781,10 +4762,6 @@ packages:
     resolution: {integrity: sha512-CvexbZtbov6jW2eXAvLukXjXUW1TzFaivC46BpWc/3BpcCysb5Vffu+B3XHMm8lVEuy2Mm4XGex8hBSg1yapPg==}
     engines: {node: '>=12.0.0'}
 
-  protobufjs@8.0.0:
-    resolution: {integrity: sha512-jx6+sE9h/UryaCZhsJWbJtTEy47yXoGNYI4z8ZaRncM0zBKeRqjO2JEcOUYwrYGb1WLhXM1FfMzW3annvFv0rw==}
-    engines: {node: '>=12.0.0'}
-
   proxy-addr@2.0.7:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
@@ -4872,11 +4849,6 @@ packages:
     resolution: {integrity: sha512-4BTbDbRmS7iPdhYLRcz3PGFIpFJBwNZg9g42iwa2P6FOv9vZj/xJc678RZXnLNZzd0qd7Q3CCF6Yd+CU2eoXKQ==}
     peerDependencies:
       react-native: '>=0.56'
-
-  react-native-get-random-values@2.0.0:
-    resolution: {integrity: sha512-wx7/aPqsUIiWsG35D+MsUJd8ij96e3JKddklSdrdZUrheTx89gPtz3Q2yl9knBArj5u26Cl23T88ai+Q0vypdQ==}
-    peerDependencies:
-      react-native: '>=0.81'
 
   react-native@0.84.1:
     resolution: {integrity: sha512-0PjxOyXRu3tZ8EobabxSukvhKje2HJbsZikR0U+pvS0pYZza2hXKjcSBiBdFN4h9D0S3v6a8kkrDK6WTRKMwzg==}
@@ -5440,10 +5412,6 @@ packages:
     deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
-  uuid@11.1.0:
-    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
-    hasBin: true
-
   uuid@13.0.2:
     resolution: {integrity: sha512-vzi9uRZ926x4XV73S/4qQaTwPXM2JBj6/6lI/byHH1jOpCzb0zDbfytgA9LcN/hzb2l7WQSQnxITOVx5un/wGw==}
     hasBin: true
@@ -5574,11 +5542,6 @@ packages:
     resolution: {integrity: sha512-h/z3PKvcTcTetyjl1fkj79MHNEjm+HpD6NXheWjzOekY7kV+lwDYnHw+ivHkijnCSMz1yJaWBD9vu/Fcmk+vEg==}
     peerDependencies:
       zod: ^3.24.1
-
-  zod-to-json-schema@3.25.1:
-    resolution: {integrity: sha512-pM/SU9d3YAggzi6MtR4h7ruuQlqKtad8e9S0fmxcMi+ueAK5Korys/aWcV9LIIHTVbj01NdzxcnXSN+O74ZIVA==}
-    peerDependencies:
-      zod: ^3.25 || ^4
 
   zod-to-json-schema@3.25.2:
     resolution: {integrity: sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==}
@@ -6177,8 +6140,8 @@ snapshots:
 
   '@elizaos/core@1.7.2(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0)':
     dependencies:
-      '@langchain/core': 1.1.32(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0)
-      '@langchain/textsplitters': 1.0.1(@langchain/core@1.1.32(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))
+      '@langchain/core': 1.1.48(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0)
+      '@langchain/textsplitters': 1.0.1(@langchain/core@1.1.48(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))
       adze: 2.3.0
       crypto-browserify: 3.12.1
       dotenv: 17.4.2
@@ -6364,7 +6327,7 @@ snapshots:
   '@grpc/proto-loader@0.7.15':
     dependencies:
       lodash.camelcase: 4.3.0
-      long: 5.3.1
+      long: 5.3.2
       protobufjs: 7.5.4
       yargs: 17.7.2
 
@@ -6390,28 +6353,6 @@ snapshots:
       - react-native
       - supports-color
 
-  '@hashgraph/cryptography@1.17.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))':
-    dependencies:
-      '@noble/curves': 1.8.1
-      ansi-regex: 6.2.2
-      ansi-styles: 6.2.3
-      asn1js: 3.0.6
-      bignumber.js: 9.1.1
-      bn.js: 5.2.3
-      buffer: 6.0.3
-      crypto-js: 4.2.0
-      debug: 4.4.1
-      forge-light: 1.1.4
-      js-base64: 3.7.7
-      react-native-get-random-values: 2.0.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))
-      spark-md5: 3.0.2
-      strip-ansi: 7.1.2
-      tweetnacl: 1.0.3
-      utf8: 3.0.0
-    transitivePeerDependencies:
-      - react-native
-      - supports-color
-
   '@hashgraph/proto@2.26.0-beta.3(ansi-regex@6.2.2)(ansi-styles@6.2.3)(debug@4.4.1)(protobufjs@7.5.4)(strip-ansi@7.1.2)':
     dependencies:
       ansi-regex: 6.2.2
@@ -6421,16 +6362,7 @@ snapshots:
       protobufjs: 7.5.4
       strip-ansi: 7.1.2
 
-  '@hashgraph/proto@2.26.0-beta.3(ansi-regex@6.2.2)(ansi-styles@6.2.3)(debug@4.4.1)(protobufjs@8.0.0)(strip-ansi@7.1.2)':
-    dependencies:
-      ansi-regex: 6.2.2
-      ansi-styles: 6.2.3
-      debug: 4.4.1
-      long: 5.3.1
-      protobufjs: 8.0.0
-      strip-ansi: 7.1.2
-
-  '@hashgraph/sdk@2.80.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))':
+  '@hashgraph/sdk@2.80.0(bn.js@5.2.1)(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))':
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/bignumber': 5.8.0
@@ -6442,6 +6374,7 @@ snapshots:
       ansi-regex: 6.2.2
       ansi-styles: 6.2.3
       bignumber.js: 9.1.1
+      bn.js: 5.2.1
       crypto-js: 4.2.0
       debug: 4.4.1
       js-base64: 3.7.4
@@ -6449,33 +6382,6 @@ snapshots:
       pino: 10.1.0
       pino-pretty: 13.0.0
       protobufjs: 7.5.4
-      rfc4648: 1.5.3
-      strip-ansi: 7.1.2
-      utf8: 3.0.0
-    transitivePeerDependencies:
-      - expo-crypto
-      - react-native
-      - supports-color
-
-  '@hashgraph/sdk@2.81.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))':
-    dependencies:
-      '@ethersproject/abi': 5.8.0
-      '@ethersproject/bignumber': 5.8.0
-      '@ethersproject/bytes': 5.8.0
-      '@ethersproject/rlp': 5.8.0
-      '@grpc/grpc-js': 1.12.6
-      '@hiero-ledger/cryptography': '@hashgraph/cryptography@1.17.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))'
-      '@hiero-ledger/proto': '@hashgraph/proto@2.26.0-beta.3(ansi-regex@6.2.2)(ansi-styles@6.2.3)(debug@4.4.1)(protobufjs@8.0.0)(strip-ansi@7.1.2)'
-      ansi-regex: 6.2.2
-      ansi-styles: 6.2.3
-      bignumber.js: 9.1.1
-      crypto-js: 4.2.0
-      debug: 4.4.1
-      js-base64: 3.7.4
-      long: 5.3.1
-      pino: 10.1.0
-      pino-pretty: 13.0.0
-      protobufjs: 8.0.0
       rfc4648: 1.5.3
       strip-ansi: 7.1.2
       utf8: 3.0.0
@@ -6779,26 +6685,6 @@ snapshots:
       - openai
       - ws
 
-  '@langchain/core@1.1.32(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0)':
-    dependencies:
-      '@cfworker/json-schema': 4.1.1
-      '@standard-schema/spec': 1.1.0
-      ansi-styles: 5.2.0
-      camelcase: 6.3.0
-      decamelize: 1.2.0
-      js-tiktoken: 1.0.21
-      langsmith: 0.5.10(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0)
-      mustache: 4.2.0
-      p-queue: 6.6.2
-      uuid: 11.1.0
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - '@opentelemetry/api'
-      - '@opentelemetry/exporter-trace-otlp-proto'
-      - '@opentelemetry/sdk-trace-base'
-      - openai
-      - ws
-
   '@langchain/core@1.1.48(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0)':
     dependencies:
       '@cfworker/json-schema': 4.1.1
@@ -6926,11 +6812,6 @@ snapshots:
 
   '@langchain/protocol@0.0.15': {}
 
-  '@langchain/textsplitters@1.0.1(@langchain/core@1.1.32(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))':
-    dependencies:
-      '@langchain/core': 1.1.32(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0)
-      js-tiktoken: 1.0.21
-
   '@langchain/textsplitters@1.0.1(@langchain/core@1.1.48(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))':
     dependencies:
       '@langchain/core': 1.1.48(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0)
@@ -6954,7 +6835,7 @@ snapshots:
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
       zod: 3.25.76
-      zod-to-json-schema: 3.25.1(zod@3.25.76)
+      zod-to-json-schema: 3.25.2(zod@3.25.76)
     optionalDependencies:
       '@cfworker/json-schema': 4.1.1
     transitivePeerDependencies:
@@ -8598,14 +8479,6 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axios@1.13.6(debug@4.4.3):
-    dependencies:
-      follow-redirects: 1.15.11(debug@4.4.3)
-      form-data: 4.0.5
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-
   babel-jest@29.7.0(@babel/core@7.29.0):
     dependencies:
       '@babel/core': 7.29.0
@@ -9346,10 +9219,6 @@ snapshots:
     optionalDependencies:
       debug: 4.4.1
 
-  follow-redirects@1.15.11(debug@4.4.3):
-    optionalDependencies:
-      debug: 4.4.3
-
   for-each@0.3.5:
     dependencies:
       is-callable: 1.2.7
@@ -9519,11 +9388,11 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  hedera-agent-kit@3.8.2(@cfworker/json-schema@4.1.1)(@langchain/langgraph@1.3.2(@langchain/core@1.1.48(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod-to-json-schema@3.25.2(zod@3.25.76))(zod@3.25.76))(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(react-dom@19.2.3(react@19.2.3))(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)(ws@8.19.0):
+  hedera-agent-kit@3.8.2(@cfworker/json-schema@4.1.1)(@langchain/langgraph@1.3.2(@langchain/core@1.1.48(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod-to-json-schema@3.25.2(zod@3.25.76))(zod@3.25.76))(@opentelemetry/api@1.9.0)(bn.js@5.2.1)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(react-dom@19.2.3(react@19.2.3))(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)(ws@8.19.0):
     dependencies:
       '@ai-sdk/mcp': 1.0.21(zod@3.25.76)
       '@elizaos/core': 1.7.2(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0)
-      '@hashgraph/sdk': 2.80.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))
+      '@hashgraph/sdk': 2.80.0(bn.js@5.2.1)(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3))
       '@langchain/core': 1.1.24(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0)
       '@langchain/mcp-adapters': 1.1.3(@cfworker/json-schema@4.1.1)(@langchain/core@1.1.24(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))(@langchain/langgraph@1.3.2(@langchain/core@1.1.48(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod-to-json-schema@3.25.2(zod@3.25.76))(zod@3.25.76))
       '@langchain/openai': 1.2.7(@langchain/core@1.1.24(@opentelemetry/api@1.9.0)(openai@6.29.0(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))(ws@8.19.0)
@@ -9602,7 +9471,7 @@ snapshots:
       '@types/debug': 4.1.12
       '@types/node': 18.19.130
       '@types/tough-cookie': 4.0.5
-      axios: 1.13.6(debug@4.4.3)
+      axios: 1.13.6(debug@4.4.1)
       camelcase: 6.3.0
       debug: 4.4.3
       dotenv: 16.6.1
@@ -9613,7 +9482,7 @@ snapshots:
       jsonwebtoken: 9.0.3
       load-esm: 1.0.3
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.13.6(debug@4.4.1))
+      retry-axios: 2.6.0(axios@1.13.6(debug@4.4.3))
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -10037,7 +9906,7 @@ snapshots:
 
   md5.js@1.3.5:
     dependencies:
-      hash-base: 3.0.5
+      hash-base: 3.1.2
       inherits: 2.0.4
       safe-buffer: 5.2.1
 
@@ -10588,22 +10457,7 @@ snapshots:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/node': 22.19.3
-      long: 5.3.1
-
-  protobufjs@8.0.0:
-    dependencies:
-      '@protobufjs/aspromise': 1.1.2
-      '@protobufjs/base64': 1.1.2
-      '@protobufjs/codegen': 2.0.4
-      '@protobufjs/eventemitter': 1.1.0
-      '@protobufjs/fetch': 1.1.0
-      '@protobufjs/float': 1.0.2
-      '@protobufjs/inquire': 1.1.0
-      '@protobufjs/path': 1.1.2
-      '@protobufjs/pool': 1.1.0
-      '@protobufjs/utf8': 1.1.0
-      '@types/node': 22.19.3
-      long: 5.3.1
+      long: 5.3.2
 
   proxy-addr@2.0.7:
     dependencies:
@@ -10697,11 +10551,6 @@ snapshots:
   react-is@18.3.1: {}
 
   react-native-get-random-values@1.11.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3)):
-    dependencies:
-      fast-base64-decode: 1.0.0
-      react-native: 0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3)
-
-  react-native-get-random-values@2.0.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3)):
     dependencies:
       fast-base64-decode: 1.0.0
       react-native: 0.84.1(@babel/core@7.29.0)(@types/react@19.2.7)(react@19.2.3)
@@ -10866,7 +10715,7 @@ snapshots:
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
 
-  retry-axios@2.6.0(axios@1.13.6(debug@4.4.1)):
+  retry-axios@2.6.0(axios@1.13.6(debug@4.4.3)):
     dependencies:
       axios: 1.13.6(debug@4.4.1)
 
@@ -11353,8 +11202,6 @@ snapshots:
 
   uuid@10.0.0: {}
 
-  uuid@11.1.0: {}
-
   uuid@13.0.2: {}
 
   v8-compile-cache-lib@3.0.1: {}
@@ -11462,10 +11309,6 @@ snapshots:
   yn@3.1.1: {}
 
   zod-to-json-schema@3.24.6(zod@3.25.76):
-    dependencies:
-      zod: 3.25.76
-
-  zod-to-json-schema@3.25.1(zod@3.25.76):
     dependencies:
       zod: 3.25.76
 
