@@ -1,8 +1,7 @@
-
 # HASHFLOW 🌊💸
 
-**A secure, conversational HBAR wallet for the Hedera network — powered by the Hedera Agent Kit, Gemini AI, and AWS KMS.**
-## Demo URL : [Project Demo Link](https://hedera-platform-ai.vercel.app/)
+**A secure, conversational HBAR wallet for the Hedera network — powered by the Hedera Agent Kit, GitHub Models (GPT-4o-mini), and AWS KMS.**
+
 > Private key never leaves AWS hardware. Real-time streaming AI. Enterprise-grade signing.
 
 ---
@@ -19,7 +18,7 @@ HASHFLOW is a Next.js application with two ways to interact with the Hedera Test
 
 **1. Manual Transfer** — A clean form for traditional HBAR transfers with real-time validation and HashScan links.
 
-**2. AI Agent** — A streaming conversational interface powered by Gemini 2.5 Flash via the Hedera Agent Kit:
+**2. AI Agent** — A streaming conversational interface powered by GPT-4o-mini via the Hedera Agent Kit:
 - *"What's my HBAR balance?"*
 - *"Send 5 HBAR to 0.0.12345"*
 - *"Show my recent transactions"*
@@ -43,7 +42,7 @@ Hedera Agent Kit (LangChain toolkit)
      ├── transfer_hbar tool  → sends HBAR via KMS-signed tx
      │
      ▼
-Gemini 2.5 Flash 
+GitHub Models — GPT-4o-mini
      │
      ▼
 SSE stream → real-time UI update
@@ -103,7 +102,8 @@ CloudTrail logs every Sign event ✅
 - 📋 **Transaction History** — from Hedera Mirror Node with HashScan links
 - ✅ **Human-in-the-loop** — confirms before every HBAR transfer
 - 🪵 **CloudTrail Audit** — every KMS Sign call logged automatically
-- 🔄 **LLM** — Gemini 2.5 Flash 
+- ⚡ **GitHub Models** — GPT-4o-mini via GitHub's free AI inference endpoint
+
 ---
 
 ## 🛠️ Tech Stack
@@ -113,7 +113,7 @@ CloudTrail logs every Sign event ✅
 | Frontend | Next.js, React, TypeScript, Tailwind CSS |
 | Blockchain | `@hashgraph/sdk`, Hedera Agent Kit |
 | AI Agent | `hedera-agent-kit` + LangChain |
-| LLM | Google Gemini 2.5 Flash (`@langchain/google-genai`) |
+| LLM | GitHub Models — GPT-4o-mini (`@langchain/openai`) |
 | Key Management | AWS KMS — `ECC_SECG_P256K1`, ECDSA signing |
 | Streaming | Server-Sent Events (SSE) |
 | Audit Trail | AWS CloudTrail |
@@ -127,8 +127,7 @@ CloudTrail logs every Sign event ✅
 ### Prerequisites
 - Node.js 18+
 - AWS account with KMS configured
-- Google AI Studio API key (for Gemini) — [aistudio.google.com](https://aistudio.google.com)
-- Groq API key (optional fallback) — [console.groq.com](https://console.groq.com) (If not using gemini)
+- GitHub account (for GitHub Models free API) — [github.com](https://github.com)
 - Hedera Testnet account — [portal.hedera.com](https://portal.hedera.com)
 
 ### Installation
@@ -153,9 +152,8 @@ AWS_SECRET_ACCESS_KEY=...
 AWS_REGION=us-east-1
 AWS_KMS_KEY_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
-# AI
-GEMINI_API_KEY=...
-
+# GitHub Models (free — get token at github.com/settings/tokens)
+GITHUB_TOKEN=ghp_...
 
 # App URL (change for production)
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
@@ -218,7 +216,7 @@ aws kms enable-key-rotation --key-id YOUR_KEY_ID
 - **Hedera Agent Kit integration** — official toolkit powering real on-chain queries and transfers
 - **Zero key exposure** — private key deleted after bootstrap, KMS does all signing forever
 - **Production streaming** — SSE pipeline streams AI responses word-by-word with live cursor
-- **Dual LLM architecture** — Gemini primary with Groq fallback for resilience
+- **GitHub Models** — free GPT-4o-mini inference with no extra API key cost
 - **Human-in-the-loop** — agent always confirms before executing transfers
 
 ---
@@ -238,8 +236,9 @@ aws kms enable-key-rotation --key-id YOUR_KEY_ID
 - **ASN1 DER Parsing** — AWS KMS returns ECDSA signatures in ASN1 DER format; Hedera needs raw 64-byte r+s. Built a custom parser with `asn1.js`
 - **secp256k1 Hashing** — `ECC_SECG_P256K1` requires keccak256 digest (not SHA-256) before KMS signing
 - **Clock Skew** — Hedera rejects transactions with timestamps too far from network time; solved with `TransactionId.withValidStart()` set 30s in the past
-- **Hedera Agent Kit Tool Schemas** — Gemini requires simplified Zod schemas; removed `.positive()` and `.min()` constraints that caused tool call failures
+- **Hedera Agent Kit Tool Schemas** — GPT-4o-mini requires clean Zod schemas; removed `.positive()` and `.min()` constraints that caused tool call failures
 - **SSE Streaming** — coordinating LangChain's synchronous tool loop with an async SSE writer required careful async/await management
+- **@hashgraph/sdk Version Conflict** — hedera-agent-kit and the app pinned different SDK versions; resolved by pinning `2.80.0` in overrides
 
 ---
 
@@ -263,7 +262,7 @@ aws kms enable-key-rotation --key-id YOUR_KEY_ID
 │                                              │
 │  ChatInterface → SSE stream → useChat hook  │
 │         │                                    │
-│   /api/ai (Hedera Agent Kit + Gemini)        │
+│   /api/ai (Hedera Agent Kit + GPT-4o-mini)  │
 │         │                                    │
 │   ┌─────┴──────┐    ┌────────────────┐       │
 │   │ Hedera     │    │  AWS KMS (HSM) │       │
