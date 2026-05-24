@@ -15,7 +15,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@huggingface/inference": "^4.13.12",
     "@langchain/community": "^1.1.16",
-    "@langchain/core": "^1.1.26",
+    "@langchain/core": "^1.1.48",
     "@langchain/google-genai": "^2.1.31",
     "@langchain/groq": "^1.2.1",
     "@langchain/langgraph": "^1.1.0",
